@@ -1,0 +1,2 @@
+DROP VIEW View_User_Information;
+DROP VIEW VIEW_ARE_FRIENDS;
