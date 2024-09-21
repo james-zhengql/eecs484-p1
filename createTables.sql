@@ -9,7 +9,6 @@ CREATE TABLE Users
     gender VARCHAR2(100)
 );
 
--- allow more
 CREATE TABLE Friends
 (
     user1_id INTEGER,
@@ -19,6 +18,18 @@ CREATE TABLE Friends
     FOREIGN KEY (user2_id) REFERENCES Users (user_id) ON DELETE CASCADE,
     CHECK (user1_id != user2_id)
 );
+CREATE TRIGGER Order_Friend_Pairs
+    BEFORE INSERT ON Friends
+    FOR EACH ROW
+        DECLARE temp INTEGER;
+        BEGIN
+            IF :NEW.user1_id > :NEW.user2_id THEN
+                temp := :NEW.user2_id;
+                :NEW.user2_id := :NEW.user1_id;
+                :NEW.user1_id := temp;
+            END IF;
+        END;
+/
 
 CREATE TABLE Cities
 (
@@ -28,6 +39,19 @@ CREATE TABLE Cities
     country_name VARCHAR2(100) NOT NULL,
     UNIQUE (city_name, state_name, country_name)
 );
+
+CREATE SEQUENCE city_id_seq
+    START WITH 1
+    INCREMENT BY 1;
+
+CREATE TRIGGER city_id_trigger
+    BEFORE INSERT ON Cities
+    FOR EACH ROW
+        BEGIN
+            SELECT city_id_seq.NEXTVAL INTO :NEW.city_id FROM DUAL;
+        END;
+/
+
 
 CREATE TABLE User_Current_Cities
 (
@@ -51,7 +75,9 @@ CREATE TABLE Messages
     sender_id INTEGER NOT NULL,
     receiver_id INTEGER NOT NULL,
     message_content VARCHAR2(2000) NOT NULL,
-    sent_time TIMESTAMP NOT NULL
+    sent_time TIMESTAMP NOT NULL,
+    FOREIGN KEY (sender_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE Programs
@@ -62,6 +88,18 @@ CREATE TABLE Programs
     degree VARCHAR2(100) NOT NULL,
     UNIQUE (institution, concentration, degree)
 );
+
+CREATE SEQUENCE program_id_seq
+    START WITH 1
+    INCREMENT BY 1;
+
+CREATE TRIGGER program_id_trigger
+    BEFORE INSERT ON Programs
+    FOR EACH ROW
+        BEGIN
+            SELECT program_id_seq.NEXTVAL INTO :NEW.program_id FROM DUAL;
+        END;
+/
 
 CREATE TABLE Education
 (
@@ -102,7 +140,7 @@ CREATE TABLE Participants
     CHECK (confirmation IN ('Attending', 'Unsure', 'Declines', 'Not_Replied'))
 );
 
-CREATE TABLE Albums
+CREATE TABLE Albums 
 (
     album_id INTEGER PRIMARY KEY,
     album_owner_id INTEGER NOT NULL,
@@ -112,18 +150,18 @@ CREATE TABLE Albums
     album_link VARCHAR2(2000) NOT NULL,
     album_visibility VARCHAR2(100) NOT NULL,
     cover_photo_id INTEGER NOT NULL,
-    FOREIGN KEY (album_owner_id) REFERENCES Users(user_id) ON DELETE CASCADE,
-    CHECK (album_visibility IN ('Everyone', 'Friends', 'Friends_Of_Friends', 'Myself')) 
+    FOREIGN KEY (album_owner_id) REFERENCES Users(user_id),
+    CHECK (album_visibility IN ('Everyone', 'Friends', 'Friends_Of_Friends', 'Myself'))
 );
 
-CREATE TABLE Photos
+CREATE TABLE Photos 
 (
     photo_id INTEGER PRIMARY KEY,
-    album_id INTEGER NOT NULL, 
+    album_id INTEGER NOT NULL,
     photo_caption VARCHAR2(2000),
     photo_created_time TIMESTAMP NOT NULL,
-    photo_modified_time TIMESTAMP, 
-    photo_link VARCHAR2(2000) NOT NULL,
+    photo_modified_time TIMESTAMP,
+    photo_link VARCHAR2(2000) NOT NULL
 );
 
 CREATE TABLE Tags
@@ -138,46 +176,17 @@ CREATE TABLE Tags
     FOREIGN KEY (tag_subject_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
 
-ALTER TABLE Albums ADD CONSTRAINT photo_covered
-FOREIGN KEY (cover_photo_id) REFERENCES Photos(photo_id) INITIALLY DEFERRED DEFERRABLE;
+ALTER TABLE Albums 
+ADD CONSTRAINT photo_covered
+FOREIGN KEY (cover_photo_id) REFERENCES Photos(photo_id) 
+INITIALLY DEFERRED DEFERRABLE;
 
-ALTER TABLE Photos ADD CONSTRAINT Albums_belonged
-FOREIGN KEY (album_id) REFERENCES Albums(album_id) INITIALLY DEFERRED DEFERRABLE;
+ALTER TABLE Photos 
+ADD CONSTRAINT Albums_belonged
+FOREIGN KEY (album_id) REFERENCES Albums(album_id) 
+INITIALLY DEFERRED DEFERRABLE;
 
 
-CREATE TRIGGER Order_Friend_Pairs
-    BEFORE INSERT ON Friends
-    FOR EACH ROW
-        DECLARE temp INTEGER;
-        BEGIN
-            IF :NEW.user1_id > :NEW.user2_id THEN
-                temp := :NEW.user2_id;
-                :NEW.user2_id := :NEW.user1_id;
-                :NEW.user1_id := temp;
-            END IF;
-        END;
-/
  
-CREATE SEQUENCE program_id_seq
-    START WITH 1
-    INCREMENT BY 1;
 
-CREATE TRIGGER program_id_trigger
-    BEFORE INSERT ON Programs
-    FOR EACH ROW
-        BEGIN
-            SELECT program_id_seq.NEXTVAL INTO :NEW.program_id FROM DUAL;
-        END;
-/
 
-CREATE SEQUENCE city_id_seq
-    START WITH 1
-    INCREMENT BY 1;
-
-CREATE TRIGGER city_id_trigger
-    BEFORE INSERT ON Cities
-    FOR EACH ROW
-        BEGIN
-            SELECT city_id_seq.NEXTVAL INTO :NEW.city_id FROM DUAL;
-        END;
-/

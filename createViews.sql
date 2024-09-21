@@ -33,7 +33,7 @@ CREATE VIEW View_Photo_Information AS
 SELECT
     A.album_id,
     A.album_owner_id,
-    P2.photo_id,
+    A.cover_photo_id,
     A.album_name,
     A.album_created_time,
     A.album_modified_time,
@@ -45,8 +45,7 @@ SELECT
     P.photo_modified_time,
     P.photo_link
 FROM Albums A
-JOIN Photos P ON A.album_id = P.album_id
-JOIN Photos P2 ON A.cover_photo_id = P2.photo_id;
+JOIN Photos P ON A.album_id = P.album_id;
 
 CREATE VIEW View_Event_Information AS
 SELECT
@@ -70,10 +69,9 @@ JOIN Cities C ON E.event_city_id = C.city_id;
 
 CREATE VIEW View_Tag_Information AS
 SELECT
-    P.photo_id,
-    T.tag_subject_id
+    T.tag_photo_id,
+    T.tag_subject_id,
     T.tag_created_time,
     T.tag_x,
     T.tag_y
-FROM Tags T
-JOIN Photos P ON T.tag_photo_id = P.photo_id;
+FROM Tags T;
